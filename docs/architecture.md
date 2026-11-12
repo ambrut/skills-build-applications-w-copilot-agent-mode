@@ -30,13 +30,13 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 
 Record your plan here before editing code.
 
-- Presentation tier decision:
-- Logic tier decision:
-- Data tier decision:
-- Activity tracking approach:
-- Team management approach:
-- Leaderboard approach:
-- Workout suggestions approach:
+- Presentation tier decision: Each page uses the `useApiResource` hook, which calls the shared `src/api/client.ts`. `CapabilityCard` renders loading (`role="status"`), error (`role="alert"`), empty, and list states. The workouts page requests suggestions for the seeded demo user `mona@example.com` because there is no authentication.
+- Logic tier decision: Business behavior and input validation live in explicit functions in `services/octofitService.ts`. Routes only delegate and forward errors. Invalid input returns a deliberate 4xx (400 for malformed input, 404 for unknown users or teams).
+- Data tier decision: Mongoose schemas enforce required fields and minimums (`minutes >= 1`, `points >= 0`). Seeding stays idempotent and upsert-based.
+- Activity tracking approach: `POST /api/activities` checks that `type` is non-empty, `minutes` is a positive number, and `userId`/`teamId` are well-formed 24-hex IDs for an existing user and team. It stores `points` equal to `minutes` (matching the seed data) and sets `occurredAt` to the current time.
+- Team management approach: `POST /api/teams` validates the schema (name and mascot required, otherwise 400) and that each member ID is well-formed. It does not check that members exist, and it does not update their `team` field.
+- Leaderboard approach: Sum `points` per team with an aggregation, join team names, and sort by total descending (ties by team name). Then assign a 1-based `rank`.
+- Workout suggestions approach: Look up the user by email (404 if none). Derive the focus from the most common type among their last 10 activities, with run, cycle, swim, walk, and row mapped to "endurance". Fall back to `fitnessGoal` when there is no activity. List matching workouts first, each with a `reason`.
 
 ## Test plan
 
